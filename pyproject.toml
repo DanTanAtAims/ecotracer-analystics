@@ -1,0 +1,24 @@
+[project]
+name = "ecotracer-analytics"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "numpy>=2.4.1",
+    "pandas>=3.0.0",
+    "pyewe",
+    "scipy>=1.10.0",
+]
+
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = ["ecotracer_analytics"]
+package-dir = {"" = "src"}
+
+[tool.uv.sources]
+
+pyewe = { path = "../PyEwE", editable = true }
