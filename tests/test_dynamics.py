@@ -6,8 +6,6 @@ import os
 
 def test_dynamics():
     # Load the EwE model
-    # We are in /home/dtan/repos/ecotracer-analytics
-    # Model is in /home/dtan/repos/pyewe_sandbox/East Bass Strait.eiixml
     model_path = "/home/dtan/repos/pyewe_sandbox/East Bass Strait.eiixml"
     
     print(f"Loading model from {model_path}...")
@@ -21,9 +19,9 @@ def test_dynamics():
     path_source = etca.EcopathSource(scen_int._core_instance)
     tracer_source = etca.EcotracerSource(scen_int._core_instance)
 
-    # 1. Calculate Analytical Equilibrium
+    # 1. Calculate Analytical Equilibrium (Now Concentrations)
     x_eq = etca.calculate_equilibrium(path_source, tracer_source)
-    print("Analytical equilibrium calculated.")
+    print("Analytical equilibrium calculated (Concentrations).")
 
     # Check derivative at equilibrium
     M = etca.calculate_coefficient(path_source, tracer_source)
@@ -34,16 +32,9 @@ def test_dynamics():
 
     # 2. Setup simulation
     # Initial concentrations: let's start at 0.5 * equilibrium
-    # Extract concentrations from state vector x_eq [C_env, A_1, ..., A_N]
-    num_groups = len(path_source.biomass)
-    c_env_eq = x_eq[0]
-    c_groups_eq = x_eq[1:] / path_source.biomass
-
-    y0 = etca.build_state_vector(
-        path_source,
-        env_conc=0.5 * c_env_eq,
-        group_concs=0.5 * c_groups_eq
-    )
+    # x_eq is [C_env, C_1, ..., C_N]
+    
+    y0 = x_eq * 0.5
 
     t_span = (0, 1000) # Simulate for 1000 years
     t_eval = np.linspace(0, 1000, 11)

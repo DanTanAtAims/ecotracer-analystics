@@ -5,10 +5,14 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
+    "cvxpy>=1.8.0",
+    "jupytext>=1.19.1",
+    "matplotlib>=3.10.8",
     "numpy>=2.4.1",
     "pandas>=3.0.0",
     "pyewe",
     "scipy>=1.10.0",
+    "seaborn>=0.13.2",
 ]
 
 [build-system]
@@ -22,3 +26,9 @@ package-dir = {"" = "src"}
 [tool.uv.sources]
 
 pyewe = { path = "../PyEwE", editable = true }
+
+[dependency-groups]
+dev = [
+    "mkdocs>=1.6.1",
+    "mkdocs-material>=9.7.1",
+]

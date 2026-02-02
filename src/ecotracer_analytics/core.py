@@ -11,8 +11,8 @@ def get_detritus_out(core: CoreInterface):
 class EcopathSource:
 
     def __init__(self, core: CoreInterface):
-        self._core = core
-
+        # We do not store core to ensure picklability
+        
         self.consumption = np.array(core.Ecopath.get_consumption())[:, 1:] # prey x predator
         self.biomass = np.array(core.Ecopath.get_biomass())
         self.immigration_rate = np.array(core.Ecopath.get_immigration())
@@ -62,7 +62,7 @@ class EcopathSource:
 class EcotracerSource:
 
     def __init__(self, core: CoreInterface):
-        self._core = core
+        # We do not store core to ensure picklability
 
         self.immigration_c = np.array(core.Ecotracer.get_immigration_concentrations())
         self.meta_dec_r = np.array(core.Ecotracer.get_metabolic_decay_rates())

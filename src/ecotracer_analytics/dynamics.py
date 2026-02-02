@@ -6,22 +6,22 @@ from .core import EcopathSource, EcotracerSource
 from .linear_system import calculate_coefficient, calculate_intercept
 
 def build_state_vector(
-    path_source: EcopathSource, 
-    env_conc: float, 
+    path_source: EcopathSource,
+    env_conc: float,
     group_concs: np.ndarray
 ) -> np.ndarray:
     """
-    Helper to build the state vector x = [C_env, A_1, ..., A_N] from concentrations.
-    
+    Helper to build the state vector x = [C_env, C_1, ..., C_N] from concentrations.
+
     Parameters
     ----------
     path_source : EcopathSource
-        Used to retrieve biomass for converting concentration to amount (A_i = C_i * B_i).
+        Ecopath parameters wrapper.
     env_conc : float
         Initial concentration in the environment.
     group_concs : np.ndarray
         Initial concentrations for the N functional groups.
-    
+
     Returns
     -------
     np.ndarray
@@ -30,10 +30,10 @@ def build_state_vector(
     num_groups = len(path_source.biomass)
     if len(group_concs) != num_groups:
         raise ValueError(f"Expected {num_groups} group concentrations, got {len(group_concs)}")
-    
+
     y = np.zeros(num_groups + 1)
     y[0] = env_conc
-    y[1:] = group_concs * path_source.biomass
+    y[1:] = group_concs
     return y
 
 def simulate_dynamics(
@@ -46,8 +46,8 @@ def simulate_dynamics(
     **kwargs: Any
 ):
     """
-    Simulates the Ecotracer ODE system over time.
-    dy/dt = b - M * y
+    Simulates the Ecotracer ODE system over time for Concentrations.
+    dC/dt = b - M * C
 
     Parameters
     ----------
@@ -56,8 +56,8 @@ def simulate_dynamics(
     tracer_source : EcotracerSource
         Ecotracer parameters wrapper.
     y0 : np.ndarray
-        Initial state vector [C_env, A_1, ..., A_N].
-        Use build_state_vector() to construct this from concentrations.
+        Initial state vector [C_env, C_1, ..., C_N].
+        Use build_state_vector() to construct this.
     t_span : tuple
         (t_start, t_end) for the simulation.
     t_eval : np.ndarray, optional
@@ -72,26 +72,47 @@ def simulate_dynamics(
     scipy.integrate._ivp.ivp.OdeResult
         The result object from solve_ivp.
     """
-    
-    # 1. Build System Matrices
-    # M (Coefficient Matrix): diagonal = loss rates, off-diagonal = -transfer rates
-    # b (Intercept Vector): independent inflows (environment base inflow, immigration)
+
+    # 1. Build System Matrices (Concentration-based)
+    # M: Rate coefficients matrix
+    # b: Independent specific inflow rates
     M = calculate_coefficient(path_source, tracer_source)
     b = calculate_intercept(path_source, tracer_source)
 
     # 2. Define Derivative Function
     def system_derivative(t, y):
-        # dy/dt = b - M @ y
-        # Note: M is built such that M*y accounts for both losses (positive diagonal)
-        # and gains from other groups (negative off-diagonals).
+        # dC/dt = b - M @ y
         return b - M @ y
 
     # 3. Solve the IVP
     return solve_ivp(
-        system_derivative, 
-        t_span, 
-        y0, 
-        t_eval=t_eval, 
-        method=method, 
+        system_derivative,
+        t_span,
+        y0,
+        t_eval=t_eval,
+        method=method,
+        **kwargs
+    )
+
+def simulate_dynamics_with_matrices(
+    M: np.ndarray,
+    b: np.ndarray,
+    y0: np.ndarray,
+    t_span: Tuple[float, float],
+    t_eval: Optional[np.ndarray] = None,
+    method: str = "RK45",
+    **kwargs: Any
+):
+    def system_derivative(t, y):
+        # dC/dt = b - M @ y
+        return b - M @ y
+
+    # 3. Solve the IVP
+    return solve_ivp(
+        system_derivative,
+        t_span,
+        y0,
+        t_eval=t_eval,
+        method=method,
         **kwargs
     )
